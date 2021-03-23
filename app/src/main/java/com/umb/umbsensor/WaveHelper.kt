@@ -62,7 +62,7 @@ class WaveHelper(private val mWaveView: WaveView, private val sensorManager: Sen
             val rad2deg = (180.0f / Math.PI).toFloat()
             val yaw = mOrientation[0] * rad2deg
             val pitch = mOrientation[1] * rad2deg
-            var roll = (mOrientation[2] * rad2deg)
+            var roll = (mOrientation[2] * rad2deg) * -1
 
             if (roll > -90 && roll < 90 && !rotationAnimState) {
                 rotationAnimState = true

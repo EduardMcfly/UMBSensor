@@ -40,6 +40,54 @@ class WaveHelper(private val mWaveView: WaveView, private val sensorManager: Sen
         }
     }
 
+    var gyroscopeSensorListener = object : SensorEventListener {
+        override fun onSensorChanged(event: SensorEvent) {
+            val type: Int = event.sensor.type
+            val data = event.values
+            when (type) {
+                Sensor.TYPE_ACCELEROMETER -> {
+                    mGData = data
+                }
+                Sensor.TYPE_MAGNETIC_FIELD -> {
+                    mMData = data
+                }
+                else -> {
+                    return
+                }
+            }
+            SensorManager.getRotationMatrix(mR, mI, mGData, mMData)
+
+            SensorManager.getOrientation(mR, mOrientation)
+            val incl = SensorManager.getInclination(mI)
+            val rad2deg = (180.0f / Math.PI).toFloat()
+            val yaw = mOrientation[0] * rad2deg
+            val pitch = mOrientation[1] * rad2deg
+            var roll = (mOrientation[2] * rad2deg)
+
+            if (roll > -90 && roll < 90 && !rotationAnimState) {
+                rotationAnimState = true
+                val duration: Long = 1000
+                val current = rotationAnim.animatedValue as Float
+                rotationAnim = ObjectAnimator.ofFloat(
+                    mWaveView, "rotation", current, roll
+                )
+                rotationAnim.duration = duration
+                rotationAnim.doOnEnd {
+                    rotationAnimState = false
+                }
+                rotationAnim.start()
+            }
+            Log.d(
+                "Compass", "yaw: " + (yaw).toInt() +
+                        "  pitch: " + (pitch).toInt() +
+                        "  roll: " + (roll).toInt() +
+                        "  incl: " + (incl * rad2deg).toInt()
+            )
+        }
+
+        override fun onAccuracyChanged(sensor: Sensor, i: Int) {}
+    }
+
     fun onPause() {
         sensorManager.unregisterListener(gyroscopeSensorListener)
     }
@@ -47,6 +95,18 @@ class WaveHelper(private val mWaveView: WaveView, private val sensorManager: Sen
     private fun initAnimation() {
         val animators: MutableList<Animator> = ArrayList()
 
+        val gsensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val msensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+        sensorManager.registerListener(
+            gyroscopeSensorListener,
+            gsensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+        sensorManager.registerListener(
+            gyroscopeSensorListener,
+            msensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
 
 
         // horizontal animation.

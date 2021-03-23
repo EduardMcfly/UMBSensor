@@ -1,17 +1,13 @@
 package com.umb.umbsensor
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.Color
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
+import android.hardware.*
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.RadioButton
-import android.widget.RadioGroup
-import android.widget.SeekBar
+import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +16,14 @@ import com.gelitenight.waveview.library.WaveView
 
 
 class MainActivity : AppCompatActivity() {
+    private val TAG = "CamTestActivity"
+    var preview: CameraPreview? = null
+    var buttonClick: Button? = null
+    var camera: Camera? = null
+    var act: Activity? = null
+    var ctx: Context? = null
+
+
     private var mWaveHelper: WaveHelper? = null
 
     private var mBorderColor: Int = Color.parseColor("#44FFFFFF")
@@ -125,15 +129,41 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+
+        preview = CameraPreview(this, findViewById(R.id.camera_preview))
+        if (preview != null) {
+            findViewById<FrameLayout>(R.id.layout).addView(preview)
+            preview!!.keepScreenOn = true
+        }
     }
 
     override fun onPause() {
         super.onPause()
         mWaveHelper?.cancel()
+        if (camera != null) {
+            camera!!.stopPreview();
+            // preview?.setCamera(null);
+            camera!!.release();
+            camera = null;
+        }
+        super.onPause();
     }
 
     override fun onResume() {
         super.onResume()
         mWaveHelper?.start()
+        super.onResume()
+        val numCams = Camera.getNumberOfCameras()
+        if (numCams > 0) {
+            try {
+                camera = Camera.open(0)
+                if (camera != null) {
+                    camera!!.startPreview()
+                    preview?.setCamera(camera!!)
+                }
+            } catch (ex: RuntimeException) {
+
+            }
+        }
     }
 }

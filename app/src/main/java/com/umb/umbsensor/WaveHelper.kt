@@ -64,17 +64,17 @@ class WaveHelper(private val mWaveView: WaveView, private val sensorManager: Sen
             val pitch = mOrientation[1] * rad2deg
             var roll = (mOrientation[2] * rad2deg) * -1
 
+            val duration: Long = 1000
+            val current = rotationAnim.animatedValue as Float
+            val diff = abs(abs(current.toInt()) - abs(roll))
+            if (diff > 20 && !amplitudeAnim.isRunning) {
+                amplitudeAnim.repeatCount = 1
+                amplitudeAnim.repeatMode = ValueAnimator.REVERSE
+                amplitudeAnim.duration = (1000 * (diff / 20)).toLong()
+                amplitudeAnim.start()
+            }
             if (roll > -90 && roll < 90 && !rotationAnimState) {
                 rotationAnimState = true
-                val duration: Long = 1000
-                val current = rotationAnim.animatedValue as Float
-                val diff = abs(abs(current.toInt()) - abs(roll))
-                if (diff > 20 && !amplitudeAnim.isRunning) {
-                    amplitudeAnim.repeatCount = ValueAnimator.INFINITE
-                    amplitudeAnim.repeatMode = ValueAnimator.REVERSE
-                    amplitudeAnim.duration = duration * (diff / 10).toInt()
-                    amplitudeAnim.start()
-                }
                 rotationAnim = ObjectAnimator.ofFloat(
                     mWaveView, "rotation", current, roll
                 )
